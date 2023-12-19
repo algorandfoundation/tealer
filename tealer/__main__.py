@@ -238,7 +238,9 @@ def generic_options(parser: argparse.ArgumentParser) -> None:
 
 
 def parse_args(
-    detector_classes: List[Type[AbstractDetector]], printer_classes: List[Type[AbstractPrinter]]
+    detector_classes: List[Type[AbstractDetector]],
+    printer_classes: List[Type[AbstractPrinter]],
+    args: list[str] = None,
 ) -> argparse.Namespace:
     """parse command line arguments of tealer.
 
@@ -247,6 +249,8 @@ def parse_args(
             available detectors in tealer command help message.
         printer_classes: list of printers available to tealer. Used to display
             available printers in tealer command help message.
+        args: list of command line arguments to parse. If not given, defaults to
+            ``sys.argv``.
 
     Returns:
         Namespace object representing the parsed command line arguments.
@@ -360,9 +364,9 @@ def parse_args(
         parser.print_help(sys.stderr)
         sys.exit(1)
 
-    args = parser.parse_args()
+    parsed_args = parser.parse_args(args)
 
-    return args
+    return parsed_args
 
 
 # from slither: slither/__main__.py
@@ -452,7 +456,6 @@ def handle_output(
     output_directory = ROOT_OUTPUT_DIRECTORY / Path(teal.contract_name)
     os.makedirs(output_directory, exist_ok=True)
     if args.json is None:
-
         if error is not None:
             print(f"Error: {error}")
             sys.exit(-1)
@@ -510,7 +513,7 @@ def fetch_contract(args: argparse.Namespace) -> Tuple[str, str]:
 
 
 # pylint: disable=too-many-locals,too-many-branches
-def main() -> None:
+def detect(args: list[str] = None) -> None:
     """Entry point of the tealer tool.
 
     This function is called when tealer command is executed or tealer is
@@ -519,11 +522,11 @@ def main() -> None:
     """
 
     detector_classes, printer_classes = get_detectors_and_printers()
-    args = parse_args(detector_classes, printer_classes)
+    args = parse_args(detector_classes, printer_classes, args)
     validate_command_line_options(args)
 
     default_log = logging.INFO if not args.debug else logging.DEBUG
-    for (logger_name, logger_level) in [
+    for logger_name, logger_level in [
         ("Detectors", default_log),
         ("TransactionCtxAnalysis", default_log),
         ("Parsing", default_log),
@@ -611,4 +614,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    detect()
